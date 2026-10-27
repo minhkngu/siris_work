@@ -44,3 +44,10 @@ test('native formula and lookup values preserve amounts, zero, dates and linked 
   assert.deepEqual(a.normalizeValue({type:21},[{record_ids:['recA','recB'],text:'rooms'}]),[{id:'recA'},{id:'recB'}]);
   assert.deepEqual(a.normalizeValue({type:18},[{id:'recA'}]),[{id:'recA'}]);
 });
+
+test('numeric API results accept scalar text and single results without treating blanks or lists as zero',()=>{
+ const a=new LarkAdapter({accessToken:'u'});
+ for(const value of [1250,'1250',[1250],['1250'],[{text:'1250'}]])assert.equal(a.normalizeValue({type:2},value),1250);
+ assert.equal(a.normalizeValue({type:20},{type:2,value:['1250']}),1250);
+ for(const value of ['',[],[1,2],false,'invalid'])assert.equal(a.normalizeValue({type:2},value),null);
+});

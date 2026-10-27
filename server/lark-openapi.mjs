@@ -40,8 +40,13 @@ export class LarkAdapter {
     if(value==null)return null;const type=field?.type;
     if([19,20].includes(type)&&typeof value==='object'&&!Array.isArray(value)&&Object.hasOwn(value,'value')){
       const result=value.value,resultType=value.type??field?.property?.type?.data_type;
-      if(resultType===2&&Array.isArray(result))return result.length===1&&typeof result[0]==='number'?result[0]:null;
       return this.normalizeValue({type:resultType},result);
+    }
+    if(type===2){
+      let scalar=value;if(Array.isArray(scalar))scalar=scalar.length===1?scalar[0]:null;
+      if(scalar&&typeof scalar==='object')scalar=scalar.text??scalar.value;
+      if(typeof scalar!=='number'&&typeof scalar!=='string'||typeof scalar==='string'&&!scalar.trim())return null;
+      const number=Number(scalar);return Number.isFinite(number)?number:null;
     }
     if(type===1)return typeof value==='string'?value:value.map?.(x=>x.text||'').join('')||'';
     if([5,1001,1002].includes(type)&&typeof value==='number')return new Date(value).toISOString();
