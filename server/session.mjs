@@ -12,11 +12,17 @@ export function unseal(value){const bytes=Buffer.from(value,'base64url'),deciphe
 export function cookies(req){return Object.fromEntries((req.headers.cookie||'').split(';').filter(x=>x.includes('=')).map(x=>{const at=x.indexOf('=');return[x.slice(0,at).trim(),x.slice(at+1).trim()];}));}
 export function cookie(name,value,seconds){return `${name}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${seconds}`;}
 export function equal(a,b){if(typeof a!=='string'||typeof b!=='string')return false;const aa=Buffer.from(a),bb=Buffer.from(b);return aa.length===bb.length&&timingSafeEqual(aa,bb);}
-function setSession(res,value){const encrypted=seal(value);if(encrypted.length>3700)throw Object.assign(new Error('Phiên Lark vượt giới hạn của bản thử. Vui lòng liên hệ quản trị.'),{status:503});res.setHeader('Set-Cookie',cookie('__Host_siris_session',encrypted,604800));}
-export function clearSession(res){res.setHeader('Set-Cookie',cookie('__Host_siris_session','',0));}
+const sessionCookieNames=['__Host_siris_session','__Host_siris_session_1','__Host_siris_session_2'];
+export function sessionCookies(value){
+  const encrypted=seal(value),chunkSize=3400;
+  if(encrypted.length>chunkSize*sessionCookieNames.length)throw Object.assign(new Error('Phiên Lark vượt giới hạn kích thước hỗ trợ. Vui lòng liên hệ quản trị.'),{status:503});
+  return sessionCookieNames.map((name,index)=>{const chunk=encrypted.slice(index*chunkSize,(index+1)*chunkSize);return cookie(name,chunk,chunk?604800:0);});
+}
+function setSession(res,value){res.setHeader('Set-Cookie',sessionCookies(value));}
+export function clearSession(res){res.setHeader('Set-Cookie',sessionCookieNames.map(name=>cookie(name,'',0)));}
 async function oauthToken(body){const response=await fetch('https://open.larksuite.com/open-apis/authen/v2/oauth/token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client_id:process.env.LARK_APP_ID,client_secret:process.env.LARK_APP_SECRET,...body}),signal:AbortSignal.timeout(15000)});const data=await response.json();if(!response.ok||data.code||!data.access_token)throw Object.assign(new Error('Phiên Lark không còn hợp lệ. Vui lòng đăng nhập lại.'),{status:401});return data;}
 export async function session(req,{refresh=false,res}={}){
-  config();const encrypted=cookies(req).__Host_siris_session;if(!encrypted)return null;
+  config();const jar=cookies(req);if(!jar.__Host_siris_session)return null;const encrypted=sessionCookieNames.map(name=>jar[name]||'').join('');
   let value;try{value=unseal(encrypted);}catch{return null;}
   if(!value?.user?.id||value.user.tenant!==process.env.LARK_TENANT_KEY||!value.accessToken||!Number.isFinite(value.createdAt)||value.createdAt+7*86400000<Date.now())return null;
   if(value.expiresAt<Date.now()+120000){
@@ -44,8 +50,7 @@ export async function authRoute(req,res,url){
     if(!response.ok||result.code||!user?.open_id||user.tenant_key!==process.env.LARK_TENANT_KEY)return reply(res,403,{error:'Tài khoản không thuộc tổ chức Siris được cấp phép.'});
     if(!token.refresh_token)return reply(res,403,{error:'Lark chưa cấp quyền duy trì đăng nhập. Cần cấp offline_access cho ứng dụng.'});
     const value={user:{id:user.open_id,name:String(user.name||'').slice(0,100),tenant:user.tenant_key},accessToken:token.access_token,refreshToken:token.refresh_token,expiresAt:Date.now()+token.expires_in*1000,createdAt:Date.now()};
-    const encrypted=seal(value);if(encrypted.length>3700)throw Object.assign(new Error('Phiên Lark vượt giới hạn của bản thử.'),{status:503});
-    res.setHeader('Set-Cookie',[cookie('__Host_siris_session',encrypted,604800),cookie('__Host_siris_oauth','',0)]);res.writeHead(302,{Location:'/', 'Cache-Control':'no-store'});res.end();return;
+    res.setHeader('Set-Cookie',[...sessionCookies(value),cookie('__Host_siris_oauth','',0)]);res.writeHead(302,{Location:'/', 'Cache-Control':'no-store'});res.end();return;
   }
   if(url.pathname==='/api/auth/logout'){
     if(req.method!=='POST'||req.headers.origin!==origin)return reply(res,403,{error:'Nguồn yêu cầu không hợp lệ.'});clearSession(res);return reply(res,200,{ok:true});

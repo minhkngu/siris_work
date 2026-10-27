@@ -4,7 +4,8 @@ import {Readable} from 'node:stream';
 import handler from '../api/index.js';
 import {LarkAdapter,LarkError} from '../server/lark-openapi.mjs';
 import {createApplication} from '../server.mjs';
-import {seal,unseal} from '../server/session.mjs';
+import {seal,unseal,session,sessionCookies,clearSession} from '../server/session.mjs';
+import {randomBytes} from 'node:crypto';
 
 function response(){return {status:0,headers:{},data:'',setHeader(k,v){this.headers[k]=v;},writeHead(s,h){this.status=s;Object.assign(this.headers,h);},end(v){this.data=v?String(v):'';}};}
 function request(url,method='GET',body){const req=Readable.from(body?[JSON.stringify(body)]:[]);Object.assign(req,{url,method,headers:{'content-type':'application/json',origin:'https://siris.test'}});return req;}
@@ -22,3 +23,13 @@ test('repeated pagination tokens reject incomplete data',async()=>{const a=new L
 test('a forbidden secondary table does not break the current tab',async()=>{const adapter={dependencies:()=>['payments','contacts'],records:async table=>{if(table.key==='contacts')throw new LarkError(403,'denied');return [{record_id:'rec123456789',Ngày:'2026-10-25', 'Nội dung':'Visible payment','Số tiền':100, 'Đã chi':false}];},revision:()=>1,options:async()=>({}),execute:()=>{throw new Error('No CLI allowed');}};const res=response();await createApplication({adapter,origin:'https://siris.test',view:'payments'})(request('/api/data?view=payments'),res);assert.equal(res.status,200);const data=JSON.parse(res.data);assert.equal(data.tables.contacts.denied,true);assert.equal(data.rows.filter(r=>r.source==='payments').length,1);assert.ok(!data.rows.some(r=>r.source==='contact'));});
 test('server rejects a stale payment edit without writing',async()=>{let writes=0;const adapter={dependencies:()=>['payments'],records:async table=>table.key==='payments'?[{record_id:'rec123456789',Ngày:'2026-10-25', 'Nội dung':'Changed by someone','Số tiền':100}]:[],revision:()=>1,options:async()=>({}),execute:async()=>{writes++;return {stdout:'{"ok":true}'};}};const res=response();await createApplication({adapter,origin:'https://siris.test',view:'payments'})(request('/api/payments/update','PATCH',{recordId:'rec123456789',changes:{category:'New'},original:{category:'Old'}}),res);assert.equal(res.status,409);assert.equal(writes,0);});
 test('base-specific allowed table list blocks arbitrary table IDs',()=>{const a=new LarkAdapter({accessToken:'u'});assert.throws(()=>a.base('tblUnrelated'),e=>e.status===400);});
+
+test('large Lark sessions round trip through bounded secure cookies and reject missing chunks',async()=>{
+  const value={user:{id:'user-large',tenant:'tenant_test'},accessToken:randomBytes(1800).toString('base64'),refreshToken:randomBytes(1800).toString('base64'),createdAt:Date.now(),expiresAt:Date.now()+3600000};
+  const parts=sessionCookies(value);assert.equal(parts.length,3);
+  for(const part of parts){assert.ok(Buffer.byteLength(part)<4096);assert.match(part,/HttpOnly; Secure; SameSite=Lax/);}
+  const req={headers:{cookie:parts.map(p=>p.split(';')[0]).join('; ')}};assert.deepEqual(await session(req),value);
+  req.headers.cookie=parts[0].split(';')[0];assert.equal(await session(req),null);
+  const res=response();clearSession(res);assert.equal(res.headers['Set-Cookie'].length,3);assert.ok(res.headers['Set-Cookie'].every(p=>p.endsWith('Max-Age=0')));
+  assert.throws(()=>sessionCookies({...value,accessToken:'x'.repeat(12000)}),e=>e.status===503);
+});
