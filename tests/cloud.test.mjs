@@ -33,3 +33,14 @@ test('large Lark sessions round trip through bounded secure cookies and reject m
   const res=response();clearSession(res);assert.equal(res.headers['Set-Cookie'].length,3);assert.ok(res.headers['Set-Cookie'].every(p=>p.endsWith('Max-Age=0')));
   assert.throws(()=>sessionCookies({...value,accessToken:'x'.repeat(12000)}),e=>e.status===503);
 });
+
+test('native formula and lookup values preserve amounts, zero, dates and linked records',()=>{
+  const a=new LarkAdapter({accessToken:'u'});
+  assert.equal(a.normalizeValue({type:20},{type:2,value:125050}),125050);
+  assert.equal(a.normalizeValue({type:20},{type:2,value:0}),0);
+  assert.equal(a.normalizeValue({type:20},{type:2,value:null}),null);
+  assert.equal(a.normalizeValue({type:19},{type:1,value:[{text:'mia'}]}),'mia');
+  assert.equal(a.normalizeValue({type:20},{type:5,value:1700000000000}),new Date(1700000000000).toISOString());
+  assert.deepEqual(a.normalizeValue({type:21},[{record_ids:['recA','recB'],text:'rooms'}]),[{id:'recA'},{id:'recB'}]);
+  assert.deepEqual(a.normalizeValue({type:18},[{id:'recA'}]),[{id:'recA'}]);
+});

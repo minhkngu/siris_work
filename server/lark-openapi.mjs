@@ -38,11 +38,16 @@ export class LarkAdapter {
   }
   normalizeValue(field,value){
     if(value==null)return null;const type=field?.type;
+    if([19,20].includes(type)&&typeof value==='object'&&!Array.isArray(value)&&Object.hasOwn(value,'value')){
+      const result=value.value,resultType=value.type??field?.property?.type?.data_type;
+      if(resultType===2&&Array.isArray(result))return result.length===1&&typeof result[0]==='number'?result[0]:null;
+      return this.normalizeValue({type:resultType},result);
+    }
     if(type===1)return typeof value==='string'?value:value.map?.(x=>x.text||'').join('')||'';
     if([5,1001,1002].includes(type)&&typeof value==='number')return new Date(value).toISOString();
     if([3,4].includes(type))return Array.isArray(value)?value:[value];
     if([18,21].includes(type)&&typeof value==='object'&&value.link_record_ids)return value.link_record_ids.map(id=>({id}));
-    if(type===18||type===21&&Array.isArray(value)&&value.every(v=>typeof v==='string'))return value.map(id=>({id}));
+    if([18,21].includes(type)&&Array.isArray(value))return value.flatMap(item=>typeof item==='string'?[{id:item}]:item?.id?[{id:item.id}]:Array.isArray(item?.record_ids)?item.record_ids.map(id=>({id})):[]);
     if(type===15)return value.link||value.text||'';
     if(type===19){if(Array.isArray(value))return value.map(v=>typeof v==='object'?(v.text||v.value||''):v).join(', ');return value?.value??value;}
     if([1003,1004].includes(type))return Array.isArray(value)?value:[value];
