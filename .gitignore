@@ -1,0 +1,16 @@
+node_modules/
+public/
+.vercel/
+.env
+.env.*
+!.env.example
+*.ndjson
+*.manifest.json
+*.log
+.DS_Store
+.taste-skill/
+/*-preview.png
+/*-preview.jpg
+/ui-preview-*.jpg
+/payment-*.jpg
+/payments-*.jpg
