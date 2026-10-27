@@ -51,3 +51,5 @@ test('numeric API results accept scalar text and single results without treating
  assert.equal(a.normalizeValue({type:20},{type:2,value:['1250']}),1250);
  for(const value of ['',[],[1,2],false,'invalid'])assert.equal(a.normalizeValue({type:2},value),null);
 });
+
+test('formula text arrays become room labels instead of object strings',()=>{const a=new LarkAdapter({accessToken:'u'});assert.equal(a.normalizeValue({type:20},[{text:'lune.302',type:'text'}]),'lune.302');});

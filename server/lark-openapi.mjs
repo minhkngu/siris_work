@@ -48,6 +48,7 @@ export class LarkAdapter {
       if(typeof scalar!=='number'&&typeof scalar!=='string'||typeof scalar==='string'&&!scalar.trim())return null;
       const number=Number(scalar);return Number.isFinite(number)?number:null;
     }
+    if([19,20].includes(type)&&Array.isArray(value)&&value.every(item=>item&&typeof item.text==='string'))return value.map(item=>item.text).join(', ');
     if(type===1)return typeof value==='string'?value:value.map?.(x=>x.text||'').join('')||'';
     if([5,1001,1002].includes(type)&&typeof value==='number')return new Date(value).toISOString();
     if([3,4].includes(type))return Array.isArray(value)?value:[value];
