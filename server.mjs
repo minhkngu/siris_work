@@ -45,6 +45,16 @@ function amount(value) {
   return Number.isFinite(value) ? value : null;
 }
 
+function calendarDate(value) {
+  if (!value) return null;
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const instant = new Date(value);
+  if (!Number.isFinite(instant.getTime())) return null;
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(instant);
+}
+
 function ids(value) {
   return Array.isArray(value) ? value.map(item => item?.id).filter(Boolean) : [];
 }
@@ -121,7 +131,7 @@ function normalize(table, row) {
     return {
       id: row.record_id,
       source: 'cleaning',
-      date: row.Date || null,
+      date: calendarDate(row.Date),
       category: 'Dọn phòng ngắn hạn',
       amount: null,
       done: row['Đã dọn'] === true,
