@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f6">
+  <title>Quỹ tiền mặt · Siris Residences</title>
+  <meta name="description" content="Trang theo dõi quỹ tiền mặt và lịch sử thu chi Siris Residences">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/taste.css">
+  <script src="/cloud-auth.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">Siris Residences</div>
+      <nav aria-label="Điều hướng chính">
+        <a href="/?view=fundCreate" data-page="editor" class="nav-editor">Nhập liệu</a>
+        <span class="nav-section-label">Theo dõi</span>
+        <a href="/" data-page="cash">Quỹ tiền mặt</a>
+        <a href="/?view=companyFund" data-page="companyFund">Quỹ công ty</a>
+        <a href="/?view=cleaning" data-page="cleaning">Dọn phòng ngắn hạn</a>
+        <a href="/?view=repairs" data-page="repairs">Lịch sử sửa chữa</a>
+        <a href="/?view=purchases" data-page="purchases">Lịch sử mua sắm</a>
+        <a href="/?view=assets" data-page="assets">Tài sản</a>
+        <a href="/?view=payments" data-page="payments">Yêu cầu thanh toán</a>
+        <a href="/?view=reviews" data-page="reviews">Review</a>
+      </nav>
+    </aside>
+    <main>
+      <div class="content">
+        <div class="page-head">
+          <div><h1>Quỹ tiền mặt</h1></div>
+          <button id="refresh" class="refresh" type="button" aria-label="Làm mới dữ liệu"><span aria-hidden="true">↻</span> Làm mới</button>
+        </div>
+        <div id="notice" class="notice" role="status">Đang tải dữ liệu từ Lark Base…</div>
+        <section class="summary" aria-label="Tổng hợp">
+          <div class="metric"><span>Chênh lệch quỹ ghi sổ</span><strong id="balance">—</strong></div>
+        </section>
+        <section class="ledger" aria-labelledby="ledger-title">
+          <div class="section-head"><div><h2 id="ledger-title">Sổ giao dịch</h2><p id="source-note">Mỗi dòng giữ nguyên nguồn dữ liệu gốc.</p></div><span id="updated" class="updated">—</span></div>
+          <div class="toolbar">
+            <div class="tabs" role="tablist" aria-label="Nguồn dữ liệu">
+              <button type="button" class="active" data-source="fund" role="tab" aria-selected="true">Quỹ</button>
+              <button type="button" data-source="income" role="tab" aria-selected="false">Lịch sử thu</button>
+              <button type="button" data-source="expense" role="tab" aria-selected="false">Lịch sử chi</button>
+            </div>
+          </div>
+          <div id="entry-layout" class="entry-layout" hidden>
+          <nav id="entry-tabs" class="entry-tabs" aria-label="Chọn bảng nhập liệu"><span class="entry-tabs-label">Tài chính</span><button type="button" class="active" data-entry="fund">Quỹ tiền mặt</button><button type="button" data-entry="income">Lịch sử thu</button><button type="button" data-entry="expense">Lịch sử chi</button><button type="button" data-entry="payments">Yêu cầu thanh toán</button><span class="entry-tabs-label">Vận hành</span><button type="button" data-entry="cleaning">Dọn phòng ngắn hạn</button><button type="button" data-entry="repairs">Lịch sử sửa chữa</button></nav>
+          <div class="entry-content">
+          <form id="fund-create-form" class="fund-create-form" hidden>
+            <h3>Thêm bút toán quỹ</h3>
+            <div class="fund-form-grid">
+              <div class="entry-date-field">Ngày <input id="fund-create-date" type="date" required hidden></div>
+              <label class="select-picker">Loại giao dịch <select id="fund-create-kind" required><option value="">Chọn loại giao dịch</option></select></label>
+              <label>Số tiền (₫) <input id="fund-create-amount" type="text" inputmode="numeric" pattern="[0-9,]*" required placeholder="Nhập số tiền"></label>
+              <div class="multi-field">Lịch sử thu <select id="fund-create-income" multiple hidden></select></div>
+              <div class="multi-field">Lịch sử chi <select id="fund-create-expense" multiple hidden></select></div>
+            </div>
+            <p class="fund-form-help">Nạp tiền liên kết với lịch sử thu; rút tiền liên kết với lịch sử chi. Có thể chọn nhiều khoản trong menu.</p>
+            <p id="fund-create-message" class="fund-form-message" role="status" hidden></p>
+            <button id="fund-create-submit" type="submit">Lưu vào quỹ</button>
+          </form>
+          <form id="history-create-form" class="fund-create-form" hidden>
+            <h3 id="history-create-title">Thêm lịch sử thu</h3>
+            <div class="fund-form-grid">
+              <div class="entry-date-field">Ngày <input id="history-date" type="date" required hidden></div>
+              <label class="select-picker">Nội dung <select id="history-category"></select></label>
+              <label id="history-customer-wrap">Khách đưa (₫) <input id="history-customer" type="text" inputmode="numeric" pattern="[0-9,]*"></label>
+              <label><span id="history-amount-label">Thực nhận (₫)</span><input id="history-amount" type="text" inputmode="numeric" pattern="[0-9,]*" required></label>
+              <label class="select-picker">Toà <select id="history-building"><option value="">Chọn toà</option></select></label>
+              <label id="history-room-wrap" class="select-picker">Phòng <select id="history-room"><option value="">Không chọn</option></select></label>
+              <label id="history-location-wrap" class="select-picker" hidden>Vị trí <select id="history-location"><option value="">Không chọn</option></select></label>
+              <div id="history-fund-wrap" class="multi-field">Liên kết quỹ <select id="history-fund" multiple hidden></select></div>
+              <label class="fund-form-note">Ghi chú <textarea id="history-note" rows="2" placeholder="Chi tiết khoản thu hoặc chi"></textarea></label>
+            </div>
+            <p class="fund-form-help">Mở menu và chọn các bút toán quỹ cần liên kết.</p>
+            <label id="history-change-wrap" class="fund-form-check"><input id="history-change" type="checkbox"> Đã thối tiền cho khách</label>
+            <div id="history-advance-wrap" class="fund-form-grid history-advance" hidden>
+              <label class="select-picker">Nhân viên ứng tiền thối <select id="history-staff"><option value="">Đang kiểm tra nhân viên</option></select></label>
+              <label>Số tiền nhân viên ứng (₫) <input id="history-advance" type="text" inputmode="numeric" pattern="[0-9,]*" placeholder="Để trống nếu không ứng"></label>
+            </div>
+            <p id="history-staff-notice" class="fund-form-help" hidden></p>
+            <p id="history-message" class="fund-form-message" role="status" hidden></p>
+            <button id="history-submit" type="submit">Lưu lịch sử thu</button>
+          </form>
+          <form id="other-create-form" class="fund-create-form" hidden>
+            <h3 id="other-create-title"></h3>
+            <div class="fund-form-grid">
+              <div class="entry-date-field">Ngày <input id="other-date" type="date" required hidden></div>
+              <label id="other-building-wrap" class="select-picker">Toà <select id="other-building"><option value="">Chọn toà</option></select></label>
+              <label id="other-room-wrap" class="select-picker">Phòng / vị trí <select id="other-room"><option value="">Không chọn</option></select></label>
+              <label id="other-text-wrap" class="fund-form-note"><span id="other-text-label">Nội dung</span><textarea id="other-text" rows="2"></textarea></label>
+              <label id="other-kind-wrap" class="select-picker"><span id="other-kind-label">Loại / trạng thái</span><select id="other-kind"></select></label>
+              <label id="other-amount-wrap"><span id="other-amount-label">Số tiền (₫)</span><input id="other-amount" type="text" inputmode="numeric" pattern="[0-9,]*"></label>
+              <label id="other-extra-wrap" class="fund-form-note">Ghi chú <textarea id="other-extra" rows="2"></textarea></label>
+              <label id="other-image-wrap" class="fund-form-note image-input">Hình ảnh <input id="other-image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple><span class="image-chooser"><span class="image-chooser-button">Chọn ảnh</span><span id="other-image-count" class="image-chooser-count">Chưa chọn ảnh</span></span><span class="image-input-hint">Tối đa 5 ảnh, mỗi ảnh dưới 8 MB</span></label>
+              <label id="other-image-target-wrap" class="select-picker">Lưu ảnh vào <select id="other-image-target"><option value="Biên nhận">Biên nhận</option><option value="Hoá đơn">Hoá đơn</option></select></label>
+              <label id="other-contact-wrap" class="select-picker"><span id="other-contact-label">Thụ hưởng</span><select id="other-contact"><option value="">Không chọn</option></select></label>
+              <div id="repair-suggestions" class="repair-suggestions" hidden></div>
+              <label id="other-channel-wrap" class="select-picker">Chi cho <select id="other-channel"><option value="">Chọn</option></select></label>
+              <div id="other-related-wrap" class="fund-form-note multi-field">Lịch sử liên kết <select id="other-related" multiple hidden></select></div>
+            </div>
+            <div id="other-checks" class="other-checks"></div>
+            <p id="other-message" class="fund-form-message" role="status" hidden></p>
+            <button id="other-submit" type="submit">Lưu bản ghi</button>
+          </form>
+          </div></div>
+          <div class="filter-row" aria-label="Bộ lọc giao dịch">
+            <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Tìm nội dung, toà, ghi chú" aria-label="Tìm giao dịch"></label>
+            <div class="filter-menu-wrap"><button id="building-filter" class="filter-trigger" type="button" aria-expanded="false" aria-controls="building-options">Tất cả toà <span aria-hidden="true">⌄</span></button><div id="building-options" class="filter-options" role="menu" hidden></div></div>
+            <div class="filter-menu-wrap"><button id="room-filter" class="filter-trigger" type="button" aria-expanded="false" aria-controls="room-options">Tất cả phòng <span aria-hidden="true">⌄</span></button><div id="room-options" class="filter-options" role="menu" hidden></div></div>
+            <div class="date-filter entry-date-field">Từ ngày <input id="date-from" type="date" hidden></div>
+            <div class="date-filter entry-date-field">Đến ngày <input id="date-to" type="date" hidden></div>
+            <button id="clear-filters" class="clear-filters" type="button">Xoá lọc</button>
+          </div>
+          <p id="filter-error" class="filter-error" role="alert" hidden></p>
+          <section id="calendar-view" class="calendar-view" aria-label="Lịch dọn buồng phòng" hidden>
+            <div class="cleaning-create-bar"><button id="cleaning-create-toggle" type="button" aria-expanded="false" aria-controls="cleaning-direct-form"><span class="cleaning-create-plus" aria-hidden="true">+</span> Thêm lượt dọn</button></div>
+            <p id="cleaning-drag-message" class="cleaning-drag-message" role="status" hidden></p>
+            <form id="cleaning-direct-form" class="fund-create-form cleaning-direct-form" hidden>
+              <h3>Thêm lượt dọn phòng</h3>
+              <div class="fund-form-grid">
+                <div class="entry-date-field">Ngày <input id="cleaning-date" type="date" required hidden></div>
+                <label class="select-picker">Toà <select id="cleaning-building" required><option value="">Chọn toà</option></select></label>
+                <label class="select-picker">Phòng <select id="cleaning-room" required><option value="">Chọn toà trước</option></select></label>
+                <fieldset class="cleaning-status-field"><legend>Tình trạng</legend><div class="cleaning-status-checks"><label><input id="cleaning-done" type="checkbox"> Đã dọn</label><label><input id="cleaning-no-cleaning" type="checkbox"> Không dọn</label></div></fieldset>
+                <label class="fund-form-note">Ghi chú <textarea id="cleaning-note" rows="2" placeholder="Chi tiết cần lưu cho phòng"></textarea></label>
+              </div>
+              <p id="cleaning-message" class="fund-form-message" role="status" hidden></p>
+              <div class="cleaning-form-actions"><button id="cleaning-submit" type="submit">Lưu lượt dọn</button><button id="cleaning-cancel" type="button">Huỷ</button></div>
+            </form>
+            <div class="calendar-toolbar">
+              <div id="calendar-building-slot"></div>
+              <div class="calendar-period">
+                <button id="calendar-prev" type="button" aria-label="Tháng trước">‹</button>
+                <div class="calendar-picker select-picker"><span class="visually-hidden">Tháng</span><select id="calendar-month-picker" aria-label="Chọn tháng"></select></div>
+                <div class="calendar-picker select-picker"><span class="visually-hidden">Năm</span><select id="calendar-year-picker" aria-label="Chọn năm"></select></div>
+                <button id="calendar-today" type="button">Hôm nay</button>
+                <button id="calendar-next" type="button" aria-label="Tháng sau">›</button>
+                <span id="calendar-month" class="visually-hidden"></span>
+              </div>
+              <span id="calendar-count" class="calendar-count"></span>
+            </div>
+            <div class="calendar-weekdays" aria-hidden="true"><span>Thứ 2</span><span>Thứ 3</span><span>Thứ 4</span><span>Thứ 5</span><span>Thứ 6</span><span>Thứ 7</span><span>Chủ nhật</span></div>
+            <div id="calendar-grid" class="calendar-grid" aria-label="Ngày trong tháng"></div>
+          </section>
+          <div class="table-wrap"><table><thead><tr><th id="amount-heading" class="amount">Số tiền</th><th>Ngày</th><th id="description-heading">Nội dung</th><th id="location-heading">Toà / phòng</th></tr></thead><tbody id="rows"><tr><td colspan="4" class="empty">Đang tải…</td></tr></tbody></table></div>
+          <div class="pagination"><span id="range">—</span><div><button id="prev" type="button" aria-label="Trang trước">←</button><span id="page">—</span><button id="next" type="button" aria-label="Trang sau">→</button></div></div>
+        </section>
+        <section id="company-fund-view" class="company-fund-view" aria-label="Quỹ công ty" hidden>
+          <div class="repair-summary"><div><span>Số dư ghi sổ</span><strong id="company-balance">0 ₫</strong></div><div><span>Tổng nộp</span><strong id="company-deposit">0 ₫</strong></div><div><span>Tổng chi</span><strong id="company-withdrawal">0 ₫</strong></div></div>
+          <div class="repair-filters"><label class="repair-search"><span class="visually-hidden">Tìm nội dung giao dịch</span><input id="company-search" type="search" placeholder="Tìm nội dung, yêu cầu thanh toán"></label><div class="repair-select select-picker"><span class="visually-hidden">Loại giao dịch</span><select id="company-kind" aria-label="Chọn loại giao dịch"><option value="">Tất cả giao dịch</option><option value="deposit">Nộp tiền</option><option value="withdrawal">Chi tiền</option></select></div><button id="company-clear" type="button" hidden>Xoá lọc</button></div>
+          <p id="company-range" class="repair-range"></p><div id="company-list" class="repair-list"></div>
+          <div class="repair-pages"><button id="company-prev" type="button" aria-label="Trang trước">←</button><span id="company-page"></span><button id="company-next" type="button" aria-label="Trang sau">→</button></div>
+        </section>
+        <section id="repairs-view" class="repairs-view" aria-label="Tổng hợp lịch sử sửa chữa" hidden>
+          <div class="repair-summary" aria-label="Tổng hợp sửa chữa">
+            <div><span>Tổng lượt</span><strong id="repair-total">0</strong></div>
+            <div><span>Đang xử lý</span><strong id="repair-open">0</strong></div>
+            <div><span>Chi phí đã ghi</span><strong id="repair-cost">0 ₫</strong><small id="repair-cost-count"></small></div>
+          </div>
+          <div class="repair-filters" aria-label="Bộ lọc sửa chữa">
+            <label class="repair-search"><span class="visually-hidden">Tìm sự cố, vị trí hoặc người thực hiện</span><input id="repair-search" type="search" placeholder="Tìm sự cố, vị trí, người thực hiện"></label>
+            <div class="repair-select select-picker"><span class="visually-hidden">Toà</span><select id="repair-building" aria-label="Chọn toà"><option value="">Tất cả toà</option></select></div>
+            <div class="repair-select select-picker"><span class="visually-hidden">Trạng thái</span><select id="repair-status" aria-label="Chọn trạng thái"><option value="">Tất cả trạng thái</option></select></div>
+            <div class="repair-select select-picker"><span class="visually-hidden">Tháng</span><select id="repair-month" aria-label="Chọn tháng sửa chữa"><option value="">Tất cả tháng</option></select></div>
+            <button id="repair-clear" type="button">Xoá lọc</button>
+          </div>
+          <p id="repair-range" class="repair-range"></p>
+          <div id="repair-list" class="repair-list"></div>
+          <div class="repair-pages"><button id="repair-prev" type="button" aria-label="Trang trước">←</button><span id="repair-page"></span><button id="repair-next" type="button" aria-label="Trang sau">→</button></div>
+        </section>
+        <section id="purchases-view" class="purchases-view" aria-label="Lịch sử mua sắm" hidden>
+          <div class="repair-summary" aria-label="Tổng hợp mua sắm">
+            <div><span>Tổng lượt mua</span><strong id="purchase-total">0</strong></div>
+            <div><span>Tổng tiền đã ghi</span><strong id="purchase-amount">0 ₫</strong></div>
+          </div>
+          <div class="repair-filters" aria-label="Bộ lọc mua sắm">
+            <label class="repair-search"><span class="visually-hidden">Tìm tài sản hoặc ghi chú</span><input id="purchase-search" type="search" placeholder="Tìm tài sản, ghi chú"></label>
+            <div class="repair-select select-picker"><span class="visually-hidden">Tháng</span><select id="purchase-month" aria-label="Chọn tháng mua sắm"><option value="">Tất cả tháng</option></select></div>
+            <button id="purchase-clear" type="button" hidden>Xoá lọc</button>
+          </div>
+          <p id="purchase-range" class="repair-range"></p>
+          <div id="purchase-list" class="repair-list"></div>
+          <div class="repair-pages"><button id="purchase-prev" type="button" aria-label="Trang trước">←</button><span id="purchase-page"></span><button id="purchase-next" type="button" aria-label="Trang sau">→</button></div>
+        </section>
+        <section id="assets-view" class="assets-view" aria-label="Tài sản" hidden>
+          <div class="repair-summary"><div><span>Tổng tài sản</span><strong id="asset-total">0</strong></div><div><span>Có liên kết mua sắm</span><strong id="asset-purchased">0</strong></div></div>
+          <div class="repair-filters" aria-label="Bộ lọc tài sản">
+            <label class="repair-search"><span class="visually-hidden">Tìm tên, loại, model hoặc phòng</span><input id="asset-search" type="search" placeholder="Tìm tài sản, model, phòng"></label>
+            <div class="repair-select select-picker"><span class="visually-hidden">Loại tài sản</span><select id="asset-type" aria-label="Chọn loại tài sản"><option value="">Tất cả loại</option></select></div>
+            <button id="asset-clear" type="button" hidden>Xoá lọc</button>
+          </div>
+          <p id="asset-range" class="repair-range"></p>
+          <div id="asset-list" class="repair-list"></div>
+          <div class="repair-pages"><button id="asset-prev" type="button" aria-label="Trang trước">←</button><span id="asset-page"></span><button id="asset-next" type="button" aria-label="Trang sau">→</button></div>
+        </section>
+        <section id="payments-view" class="payments-view" aria-label="Yêu cầu thanh toán" hidden>
+          <div class="repair-summary" aria-label="Tổng hợp thanh toán">
+            <div><span>Tổng yêu cầu</span><strong id="payment-total">0</strong></div>
+            <div><span>Chưa chi</span><strong id="payment-pending">0</strong></div>
+            <div><span>Số tiền đã chi</span><strong id="payment-amount">0 ₫</strong></div>
+          </div>
+          <div class="repair-filters" aria-label="Bộ lọc thanh toán">
+            <label class="repair-search"><span class="visually-hidden">Tìm nội dung hoặc người thụ hưởng</span><input id="payment-search" type="search" placeholder="Tìm nội dung, người thụ hưởng"></label>
+            <div class="repair-select select-picker"><span class="visually-hidden">Trạng thái</span><select id="payment-status" aria-label="Chọn trạng thái thanh toán"><option value="">Tất cả trạng thái</option><option value="pending">Chưa chi</option><option value="paid">Đã chi</option></select></div>
+            <div class="repair-select select-picker"><span class="visually-hidden">Mục đích</span><select id="payment-purpose" aria-label="Chọn mục đích"><option value="">Tất cả mục đích</option></select></div>
+            <button id="payment-clear" type="button">Xoá lọc</button>
+          </div>
+          <p id="payment-range" class="repair-range"></p>
+          <div id="payment-list" class="repair-list"></div>
+          <div class="repair-pages"><button id="payment-prev" type="button" aria-label="Trang trước">←</button><span id="payment-page"></span><button id="payment-next" type="button" aria-label="Trang sau">→</button></div>
+        </section>
+        <section id="reviews-view" class="reviews-view" aria-label="Review" hidden>
+          <div class="review-tabs" role="tablist" aria-label="Nguồn review">
+            <button id="reviews-ota-tab" type="button" role="tab" aria-controls="reviews-ota" aria-selected="true">OTA</button>
+            <button id="reviews-google-tab" type="button" role="tab" aria-controls="reviews-google" aria-selected="false">Google Maps</button>
+          </div>
+          <div id="reviews-ota" role="tabpanel" aria-labelledby="reviews-ota-tab">
+            <div class="ota-overview" aria-label="Tổng quan OTA">
+              <div><span>Nền tảng</span><strong id="reviews-ota-platforms">0</strong></div>
+              <div><span>Link đánh giá</span><strong id="reviews-ota-total">0</strong></div>
+              <div><span>Review đã ghi</span><strong id="reviews-ota-count">0</strong></div>
+            </div>
+            <div class="ota-toolbar">
+              <div class="ota-building-filter" role="group" aria-label="Lọc toà OTA">
+                <button type="button" data-ota-building="" aria-pressed="true">Tất cả</button>
+                <button type="button" data-ota-building="lune" aria-pressed="false">Lune</button>
+                <button type="button" data-ota-building="mia" aria-pressed="false">Mia</button>
+              </div>
+              <button id="ota-errors-filter" type="button" aria-pressed="false">Cần kiểm tra lại <span id="ota-error-count">0</span></button>
+            </div>
+            <div id="reviews-sync-status" class="reviews-sync-status" role="status">Đồng bộ tự động mỗi thứ Hai lúc 09:00.</div>
+            <div id="reviews-ota-list" class="review-list"></div>
+          </div>
+          <div id="reviews-google" role="tabpanel" aria-labelledby="reviews-google-tab" hidden>
+            <div class="review-summary"><span>Ngày ghi nhận <strong id="reviews-google-total">0</strong></span><span>Ảnh review <strong id="reviews-google-count">0</strong></span></div>
+            <div id="reviews-google-list" class="review-list"></div>
+          </div>
+        </section>
+        <p class="footnote">Bộ lọc áp dụng cho sổ giao dịch; các số tổng hợp phía trên là toàn bộ dữ liệu. “Chênh lệch quỹ ghi sổ” chỉ cộng bút toán Quỹ có số tiền, không cộng lặp lịch sử thu chi.</p>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
