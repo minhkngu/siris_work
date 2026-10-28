@@ -3,12 +3,15 @@ import { promisify } from 'node:util';
 import { mkdtemp, readFile, rm, mkdir, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { loadEnvFile } from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 const execFileAsync = promisify(execFile);
 const root = path.dirname(fileURLToPath(import.meta.url));
 const profile = 'cli_aa535e128479df04';
-const baseToken = 'AWJAbd8dQaYfZOsgW5JlPbZpgdc';
+loadEnvFile(path.join(root, '.env'));
+const baseToken = process.env.LARK_BASE_TOKEN;
+if (!baseToken) throw new Error('Thiếu LARK_BASE_TOKEN trong file .env.');
 const tableId = 'tblxQ8XstkpuUT62';
 const fieldIds = { count: 'fldWZ1JLhv', score: 'fldMuuUk7h' };
 const cli = '/opt/homebrew/bin/lark-cli';
