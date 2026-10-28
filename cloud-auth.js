@@ -24,6 +24,7 @@
     let response;try{response=await readStatus();}catch{screen('Không kết nối được máy chủ. Vui lòng tải lại trang.');return;}
     if(response.status===404){allowed=true;document.querySelector('.shell').hidden=false;return;}
     lastStatusCheck=Date.now();const status=await response.json();window.sirisCloud=Boolean(status.cloud);
+    if(status.disconnected){screen('Kết nối Lark đã tạm ngắt. Các chức năng dữ liệu hiện không khả dụng.');return;}
     if(!status.configured){screen('Web đang được thiết lập kết nối Lark. Vui lòng quay lại sau.');return;}
     if(!status.authenticated){screen('Đăng nhập bằng tài khoản Lark để sử dụng web.',true);return;}
     allowed=true;document.querySelector('.shell').hidden=false;

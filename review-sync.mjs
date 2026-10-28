@@ -6,6 +6,9 @@ import path from 'node:path';
 import { loadEnvFile } from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+console.error('Đồng bộ Lark đã tạm ngắt.');
+process.exit(1);
+
 const execFileAsync = promisify(execFile);
 const root = path.dirname(fileURLToPath(import.meta.url));
 const profile = 'cli_aa535e128479df04';

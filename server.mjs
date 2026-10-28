@@ -12,7 +12,6 @@ export function createApplication({ adapter = null, origin = 'http://127.0.0.1:4
 const cloud = Boolean(adapter);
 const execFileAsync = adapter ? adapter.execute.bind(adapter) : localExecFileAsync;
 const baseToken = process.env.LARK_BASE_TOKEN;
-if(!baseToken) throw Object.assign(new Error('Chưa cấu hình Lark Base.'),{status:503});
 const profile = 'cli_aa535e128479df04';
 const tables = [
   { key: 'fund', id: 'tblGvOnBuOxoKasX', fields: ['Ngày', 'Nội dung', 'Số tiền', 'Tạo bởi', 'Thu', 'Chi'] },
@@ -422,6 +421,7 @@ function send(res, status, data, type = 'application/json; charset=utf-8') {
 
 return async function handler(req, res) {
   const url = new URL(req.url, 'http://localhost');
+  if (url.pathname.startsWith('/api/')) return send(res, 503, JSON.stringify({ error: 'Kết nối Lark đã tạm ngắt.', disconnected: true }));
   if (url.pathname === '/api/reviews/score' && req.method === 'PATCH') {
     try {
       if (req.headers.origin && req.headers.origin !== origin) return send(res, 403, JSON.stringify({ error: 'Nguồn yêu cầu không hợp lệ.' }));

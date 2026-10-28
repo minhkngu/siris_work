@@ -6,6 +6,7 @@ import {imageRoute} from '../server/images.mjs';
 
 export const config={api:{bodyParser:false}};
 export default async function handler(req,res){
+  return reply(res,503,{error:'Kết nối Lark đã tạm ngắt.',disconnected:true});
   if(req.body!==undefined){const input=Readable.from([Buffer.from(typeof req.body==='string'?req.body:JSON.stringify(req.body))]);Object.assign(input,{url:req.url,method:req.method,headers:req.headers});req=input;}
   res.setHeader('Cache-Control','private, no-store');
   res.setHeader('X-Content-Type-Options','nosniff');
